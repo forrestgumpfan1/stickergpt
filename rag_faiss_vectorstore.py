@@ -2,12 +2,22 @@ import os
 import sys
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain_openai import OpenAI
-load_dotenv()
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+#load_dotenv()
+load_dotenv(override=True)
+
+PROMPT = ChatPromptTemplate.from_template(
+    "Use the following pieces of context to answer the question at the end. "
+    "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n\n"
+    "{context}\n\n"
+    "Question: {question}\n"
+    "Helpful Answer:"
+) 
 
 
 def main():
@@ -21,7 +31,7 @@ def main():
     docstorage = vectorize_and_store(docs, api_key)
     response = answer_question(question, api_key, docstorage)
 
-    print(response['result'])
+    print(response)
     # return response
 
 def extract_data(pdf_name):
@@ -43,13 +53,21 @@ def split_text(text):
     return docs
 
 def vectorize_and_store(docs, api_key):
-    embedding_function = OpenAIEmbeddings(openai_api_key=api_key)
+    embedding_function = OpenAIEmbeddings(model="text-embedding-3-small", api_key=api_key)
     docstorage = FAISS.from_texts(docs, embedding_function)
     return docstorage
 
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
 def answer_question(question, api_key, docstorage):
-    llm=OpenAI(model_name="gpt-3.5-turbo-instruct", openai_api_key=api_key)
-    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=docstorage.as_retriever())          
+    llm = ChatOpenAI(model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"), api_key=api_key)
+    qa = (
+        {"context": docstorage.as_retriever() | format_docs, "question": RunnablePassthrough()}
+        | PROMPT
+        | llm
+        | StrOutputParser()
+    )
     response = qa.invoke(question)
     return response
 
