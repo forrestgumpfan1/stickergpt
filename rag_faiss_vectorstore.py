@@ -19,10 +19,12 @@ PROMPT = ChatPromptTemplate.from_template(
     "Helpful Answer:"
 ) 
 
+DEFAULT_PDF_NAME = "SJA_handbook.pdf"
+
 
 def main():
     question = sys.argv[1]
-    pdf_name = sys.argv[2]
+    pdf_name = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_PDF_NAME
     api_key = os.getenv("OPENAI_API_KEY")
 
     text = extract_data(pdf_name)
