@@ -1,0 +1,6 @@
+notes.md
+.ipynb_checkpoints
+.DS_Store
+.env
+*.env
+**/.DS_Store
