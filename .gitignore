@@ -5,3 +5,5 @@ notes.md
 *.env
 **/.DS_Store
 __pycache__*
+Pipfile
+Pipfile.*
