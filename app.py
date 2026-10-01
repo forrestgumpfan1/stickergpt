@@ -35,6 +35,11 @@ def index():
             answer = answer_question(question, os.getenv("OPENAI_API_KEY"), docstorage)
     return render_template("index.html", question=question, answer=answer)
 
+# Railway pings endpoint after a deploy. It only answers once the module has finished
+# importing, which means the vectorstore above was built successfully.
+@app.route("/health")
+def health():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False, port=5001)
