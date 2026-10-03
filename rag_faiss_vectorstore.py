@@ -71,7 +71,7 @@ def answer_question(question, api_key, docstorage):
         | StrOutputParser()
     )
     response = qa.invoke(question)
-    return response
+    return response 
 
 if __name__ == "__main__":
     main()
